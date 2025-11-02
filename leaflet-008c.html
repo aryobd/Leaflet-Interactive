@@ -35,9 +35,9 @@
         <script type="text/javascript" src="diy_kecamatan.js"></script>
         <script type="text/javascript" src="diy_kelurahan_desa.js"></script>
         <script>
-            // -----------------------
-            // UTILITY FUNGSI BANTUAN
-            // -----------------------
+            // -------------
+            // UTILITY KECIL
+            // -------------
             function getProp(featureProps, keys) {
                 if (!featureProps)
                     return undefined;
@@ -59,15 +59,24 @@
             // -----------------
             // INISIALISASI PETA
             // -----------------
-            const map = L.map('map', { preferCanvas: true }).setView([-6.88, 107.54], 10);
+            const map = L.map(
+                'map',
+                { preferCanvas: true }
+            ).setView([-6.88, 107.54], 10);
             
-            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+            L.tileLayer(
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                {
+                    maxZoom: 17,
+                    attribution: '&copy; OpenStreetMap'
+                }
+            ).addTo(map);
             
             map.attributionControl.setPrefix(false);
-
-            // -------------------
-            // KONTROL INFO KANAN
-            // -------------------
+            
+            // ----------------
+            // INFO CONTROL BOX
+            // ----------------
             const info = L.control({ position: 'topright' });
             
             info.onAdd = function () {
@@ -76,26 +85,35 @@
                 
                 return this._div;
             };
-
-            // === PERUBAHAN DI SINI ===
+            
+            // ✅ PERUBAHAN UTAMA DI SINI
             info.update = function (props) {
                 if (!props) {
                     this._div.innerHTML = `<b>Peta Hierarki</b>\nKlik polygon untuk turun level.`;
+                    
+                    return;
                 }
-                else {
-                    this._div.innerHTML = 
-`
-Provinsi: <b>${props.provinsi || '-'}</b>
-Kabupaten/Kota: <b>${props.kabupaten || '-'}</b>
-Kecamatan: <b>${props.kecamatan || '-'}</b>
-Kelurahan/Desa: <b>${props.kelurahan || '-'}</b>
-`;
-                }
+                
+                let lines = [];
+                
+                if (props.provinsi)
+                    lines.push(`Provinsi:  <b>${props.provinsi}</b>`);
+                
+                if (props.kabupaten)
+                    lines.push(`Kabupaten/Kota:  <b>${props.kabupaten}</b>`);
+                
+                if (props.kecamatan)
+                    lines.push(`Kecamatan:  <b>${props.kecamatan}</b>`);
+                
+                if (props.kelurahan)
+                    lines.push(`Kelurahan/Desa:  <b>${props.kelurahan}</b>`);
+
+                this._div.innerHTML = lines.join('\n');
             };
-            // === SELESAI PERUBAHAN ===
-
+            // ✅ SELESAI PERUBAHAN
+            
             info.addTo(map);
-
+            
             // ------------
             // LAYER GLOBAL
             // ------------
@@ -105,41 +123,90 @@ Kelurahan/Desa: <b>${props.kelurahan || '-'}</b>
             let kelurahanLayer = null;
             let selectedKabupaten = null;
             let selectedKecamatan = null;
-
+            
             // STYLES
-            const styleProvinsi = { color: '#0b6e4f', weight: 3, fillOpacity: 0.03 };
-            const styleKabupaten = { color: '#1f78b4', weight: 2, fillOpacity: 0.12 };
-            const styleKabupatenHover = { color: '#08519c', weight: 3, fillOpacity: 0.18 };
-            const styleKecamatan = { color: '#2b8cbe', weight: 1, fillOpacity: 0.10 };
-            const styleKecamatanHover = { color: '#d94801', weight: 2, fillOpacity: 0.18 };
-            const styleKelurahan = { color: '#31a354', weight: 1, fillOpacity: 0.12 };
-            const styleKelurahanHover = { color: '#ff6600', weight: 2, fillOpacity: 0.2 };
-
-            // === PERUBAHAN DI SINI ===
+            const styleProvinsi = {
+                color: '#0b6e4f',
+                weight: 3,
+                fillOpacity: 0.03
+            };
+            
+            const styleKabupaten = {
+                color: '#1f78b4',
+                weight: 2,
+                fillOpacity: 0.12
+            };
+            const styleKabupatenHover = {
+                color: '#08519c',
+                weight: 3,
+                fillOpacity: 0.18
+            };
+            
+            const styleKecamatan = {
+                color: '#2b8cbe',
+                weight: 1,
+                fillOpacity: 0.10
+            };
+            const styleKecamatanHover = {
+                color: '#d94801',
+                weight: 2,
+                fillOpacity: 0.18
+            };
+            
+            const styleKelurahan = {
+                color: '#31a354',
+                weight: 1,
+                fillOpacity: 0.12
+            };
+            const styleKelurahanHover = {
+                color: '#ff6600',
+                weight: 2,
+                fillOpacity: 0.2
+            };
+            
+            // ✅ PERUBAHAN UTAMA DI SINI
             function bindTooltip(layer, props) {
-                const prov = getProp(props, ['provinsi', 'name']) || '-';
-                const kab = getProp(props, ['kabupaten_kota', 'kabupaten', 'kota', 'nama']) || '-';
-                const kec = getProp(props, ['kecamatan', 'nama']) || '-';
-                const kel = getProp(props, ['kelurahan_desa', 'nama']) || '-';
-
-                const html = 
-`
-Provinsi: <b>${prov}</b><br>
-Kabupaten/Kota: <b>${kab}</b><br>
-Kecamatan: <b>${kec}</b><br>
-Kelurahan/Desa: <b>${kel}</b>
-`;
-
-                layer.bindTooltip(
-                    html,
-                    {
-                        sticky: true,
-                        direction: 'top'
-                    }
+                const prov = getProp(
+                    props,
+                    ['provinsi', 'name']
                 );
-            }
-            // === SELESAI PERUBAHAN ===
+                const kab = getProp(
+                    props,
+                    ['kabupaten_kota', 'kabupaten', 'kota', 'nama']
+                );
+                const kec = getProp(
+                    props,
+                    ['kecamatan', 'nama']
+                );
+                const kel = getProp(
+                    props, ['kelurahan_desa', 'nama']
+                );
+                
+                let html = '';
+                
+                if (prov)
+                    html += `Provinsi: <b>${prov}</b>`;
+                
+                if (kab)
+                    html += (html ? '<br>' : '') + `Kabupaten/Kota: <b>${kab}</b>`;
+                
+                if (kec)
+                    html += (html ? '<br>' : '') + `Kecamatan: <b>${kec}</b>`;
+                
+                if (kel)
+                    html += (html ? '<br>' : '') + `Kelurahan/Desa: <b>${kel}</b>`;
 
+                if (html)
+                    layer.bindTooltip(
+                        html,
+                        {
+                            sticky: true,
+                            direction: 'top'
+                        }
+                    );
+            }
+            // ✅ SELESAI PERUBAHAN
+            
             // ------------------------------
             // KAB/KOTA LAYER (TAMPIL SEMUA)
             // ------------------------------
@@ -147,22 +214,27 @@ Kelurahan/Desa: <b>${kel}</b>
                 alert('File diy_kabupaten_kota.js tidak ditemukan.');
             }
             else {
-                kabupatenLayer = L.geoJSON(diy_kabupaten_kota, {
-                    style: styleKabupaten,
-                    onEachFeature: function (feature, layer) {
-                        bindTooltip(layer, feature.properties);
-                        
-                        layer.on(
-                            {
+                kabupatenLayer = L.geoJSON(
+                    diy_kabupaten_kota,
+                    {
+                        style: styleKabupaten,
+                        onEachFeature: function (feature, layer) {
+                            bindTooltip(layer, feature.properties);
+                            
+                            layer.on({
                                 mouseover() {
                                     layer.setStyle(styleKabupatenHover);
                                     
                                     info.update(
                                         {
-                                            provinsi: getProp(feature.properties, ['provinsi','name']) || '-',
-                                            kabupaten: getProp(feature.properties, ['kabupaten_kota','kabupaten','nama']),
-                                            kecamatan: '-',
-                                            kelurahan: '-'
+                                            provinsi: getProp(
+                                                feature.properties,
+                                                ['provinsi', 'name']
+                                            ) || '-',
+                                            kabupaten: getProp(
+                                                feature.properties,
+                                                ['kabupaten_kota', 'kabupaten', 'nama']
+                                            )
                                         }
                                     );
                                 },
@@ -178,42 +250,60 @@ Kelurahan/Desa: <b>${kel}</b>
                                     
                                     selectedKabupaten = layer;
                                     
-                                    layer.setStyle({ color: '#b22222', weight: 3, fillOpacity: 0.18 });
+                                    layer.setStyle(
+                                        {
+                                            color: '#b22222',
+                                            weight: 3,
+                                            fillOpacity: 0.18
+                                        }
+                                    );
                                     
-                                    const title = getProp(feature.properties, ['kabupaten_kota','kabupaten','nama']);
+                                    const title = getProp(
+                                        feature.properties,
+                                        ['kabupaten_kota', 'kabupaten', 'nama']
+                                    );
                                     
                                     map.fitBounds(layer.getBounds(), { maxZoom: 13 });
                                     
                                     showKecamatanFor(title);
                                 }
-                            }
-                        );
+                            });
+                        }
                     }
-                }).addTo(map);
+                ).addTo(map);
             }
             
             // ---------------------------------
             // KELURAHAN LAYER (KOSONG AWALNYA)
             // ---------------------------------
-            kelurahanLayer = L.geoJSON(
-                null,
-                {
-                    style: styleKelurahan,
-                    onEachFeature(feature, layer) {
-                        bindTooltip(layer, feature.properties);
-                        
-                        layer.on({
+            kelurahanLayer = L.geoJSON(null, {
+                style: styleKelurahan,
+                onEachFeature(feature, layer) {
+                    bindTooltip(layer, feature.properties);
+                    
+                    layer.on(
+                        {
                             mouseover() {
                                 layer.setStyle(styleKelurahanHover);
                                 
-                                info.update(
-                                    {
-                                        provinsi: getProp(feature.properties, ['provinsi','name']) || '-',
-                                        kabupaten: getProp(feature.properties, ['kabupaten_kota','kabupaten','kota','nama']),
-                                        kecamatan: getProp(feature.properties, ['kecamatan','nama']),
-                                        kelurahan: getProp(feature.properties, ['kelurahan_desa','nama'])
-                                    }
-                                );
+                                info.update({
+                                    provinsi: getProp(
+                                        feature.properties,
+                                        ['provinsi', 'name']
+                                    ) || '-',
+                                    kabupaten: getProp(
+                                        feature.properties,
+                                        ['kabupaten_kota', 'kabupaten', 'kota', 'nama']
+                                    ),
+                                    kecamatan: getProp(
+                                        feature.properties,
+                                        ['kecamatan', 'nama']
+                                    ),
+                                    kelurahan: getProp(
+                                        feature.properties,
+                                        ['kelurahan_desa', 'nama']
+                                    )
+                                });
                             },
                             mouseout() {
                                 kelurahanLayer.resetStyle(layer);
@@ -221,12 +311,15 @@ Kelurahan/Desa: <b>${kel}</b>
                                 info.update();
                             },
                             click() {
-                                map.fitBounds(layer.getBounds(), { maxZoom: 17 });
+                                map.fitBounds(
+                                    layer.getBounds(),
+                                    { maxZoom: 17 }
+                                );
                             }
-                        });
-                    }
+                        }
+                    );
                 }
-            ).addTo(map);
+            }).addTo(map);
             
             // --------------------------
             // FUNGSI: TAMPILKAN KECAMATAN
@@ -242,7 +335,7 @@ Kelurahan/Desa: <b>${kel}</b>
                     f => normalize(
                         getProp(
                             f.properties,
-                            ['kabupaten_kota','kabupaten','kabkota','kota']
+                            ['kabupaten_kota', 'kabupaten', 'kabkota', 'kota']
                         )
                     ) === nk
                 );
@@ -267,10 +360,15 @@ Kelurahan/Desa: <b>${kel}</b>
                                         layer.setStyle(styleKecamatanHover);
                                         
                                         info.update({
-                                            provinsi: getProp(feature.properties, ['provinsi','name']) || '-',
+                                            provinsi: getProp(
+                                                feature.properties,
+                                                ['provinsi', 'name']
+                                            ) || '-',
                                             kabupaten: namaKabupaten,
-                                            kecamatan: getProp(feature.properties, ['kecamatan','nama']),
-                                            kelurahan: '-'
+                                            kecamatan: getProp(
+                                                feature.properties,
+                                                ['kecamatan', 'nama']
+                                            )
                                         });
                                     },
                                     mouseout() {
@@ -287,7 +385,7 @@ Kelurahan/Desa: <b>${kel}</b>
                                         
                                         layer.setStyle({ color: '#800000', weight: 3, fillOpacity: 0.2 });
                                         
-                                        const title = getProp(feature.properties, ['kecamatan','nama']);
+                                        const title = getProp(feature.properties, ['kecamatan', 'nama']);
                                         
                                         map.fitBounds(layer.getBounds(), { maxZoom: 15 });
                                         
@@ -335,64 +433,64 @@ Kelurahan/Desa: <b>${kel}</b>
             // ----------------------
             // BANGUN / TAMPILKAN PROVINSI
             // ----------------------
-            (function initProvinsiView() {
-                try {
-                    if (typeof diy_provinsi !== 'undefined' && diy_provinsi && diy_provinsi.features && diy_provinsi.features.length > 0) {
-                        provinsiLayer = L.geoJSON(
-                            diy_provinsi,
-                            {
-                                style: styleProvinsi,
-                                onEachFeature(feature, layer) {
-                                    bindTooltip(layer, feature.properties);
+            (
+                function initProvinsiView() {
+                    try {
+                        if (typeof diy_provinsi !== 'undefined' && diy_provinsi && diy_provinsi.features && diy_provinsi.features.length > 0) {
+                            provinsiLayer = L.geoJSON(
+                                diy_provinsi,
+                                {
+                                    style: styleProvinsi,
+                                    onEachFeature(feature, layer) {
+                                        bindTooltip(layer, feature.properties);
+                                    }
+                                }
+                            ).addTo(map);
+                            
+                            const b = provinsiLayer.getBounds();
+                            
+                            if (b && b.isValid())
+                                map.fitBounds(b);
+                        }
+                        else {
+                            const feats = Array.isArray(diy_kabupaten_kota && diy_kabupaten_kota.features) ? diy_kabupaten_kota.features : [];
+                            
+                            if (feats.length === 0)
+                                return;
+                            
+                            let unionPoly = feats[0];
+                            let unionSucceeded = true;
+                            
+                            for (let i = 1; i < feats.length; i++) {
+                                try {
+                                    unionPoly = turf.union(unionPoly, feats[i]);
+                                }
+                                catch {
+                                    unionSucceeded = false; break;
                                 }
                             }
-                        ).addTo(map);
-                        
-                        const b = provinsiLayer.getBounds();
-                        
-                        if (b && b.isValid())
-                            map.fitBounds(b);
-                    }
-                    else {
-                        const feats = Array.isArray(diy_kabupaten_kota && diy_kabupaten_kota.features) ? diy_kabupaten_kota.features : [];
-                        
-                        if (feats.length === 0)
-                            return;
-                        
-                        let unionPoly = feats[0];
-                        let unionSucceeded = true;
-                        
-                        for (let i = 1; i < feats.length; i++) {
-                            try {
-                                unionPoly = turf.union(unionPoly, feats[i]);
-                            }
-                            catch {
-                                unionSucceeded = false; break;
-                            }
-                        }
-                        
-                        if (!unionSucceeded) {
-                            const fullFc = turf.featureCollection(feats);
-                            const bbox = turf.bbox(fullFc);
                             
-                            unionPoly = turf.bboxPolygon(bbox);
+                            if (!unionSucceeded) {
+                                const fullFc = turf.featureCollection(feats);
+                                const bbox = turf.bbox(fullFc);
+                                unionPoly = turf.bboxPolygon(bbox);
+                            }
+                            
+                            provinsiLayer = L.geoJSON(unionPoly, { style: styleProvinsi }).addTo(map);
+                            const b = provinsiLayer.getBounds();
+                            
+                            if (b && b.isValid())
+                                map.fitBounds(b);
                         }
                         
-                        provinsiLayer = L.geoJSON(unionPoly, { style: styleProvinsi }).addTo(map);
-                        
-                        const b = provinsiLayer.getBounds();
-                        
-                        if (b && b.isValid())
-                            map.fitBounds(b);
+                        if (kabupatenLayer)
+                            kabupatenLayer.eachLayer(l => l.bringToFront());
                     }
-                    
-                    if (kabupatenLayer)
-                        kabupatenLayer.eachLayer(l => l.bringToFront());
+                    catch (err) {
+                        console.error('initProvinsiView error:', err);
+                    }
                 }
-                catch (err) {
-                    console.error('initProvinsiView error:', err);
-                }
-            })();
+            )();
 
             // --------------------------
             // RESET TO PROVINCE VIEW
@@ -431,8 +529,7 @@ Kelurahan/Desa: <b>${kel}</b>
                         c,
                         'click',
                         function (e) {
-                            e.stopPropagation();
-                            resetToProvince();
+                            e.stopPropagation(); resetToProvince();
                         }
                     );
                     
